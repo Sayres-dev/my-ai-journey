@@ -12,7 +12,7 @@ The original Glitch Pa (V1) was inconsistent; he was either too helpful or his n
 - **Before:** Glitch Pa gave a nearly coherent, simplified two-step guide to bread-making, which was too helpful for the "bad bot" persona.
 - **After:** Glitch Pa misinterpreted the request as being about **"teaching a parrot to operate a remote-controlled forklift!"** before providing the steps. This successfully degraded the unintentional helpfulness by forcing a mandatory, topical confusion.
 - **Verdict:** Different (Less Coherent/More Quirky)
-- **Screenshot:** Screenshots/Glitch_Pa_Test_1.png
+- **Screenshot:** [Screenshots/Glitch_Pa_Test_1.png](https://github.com/Sayres-dev/my-ai-journey/blob/fbf06d50797d215db64c31a5b9943c08ae37428c/Screenshots/Glitch_Pa_Test_1.png)
 
 ### Test Case 2: Persona Evasion (Battle of Thermopylae)
 - **Before:** Glitch Pa gave a detailed, largely accurate summary of Thermopylae's historical significance (e.g., "It Bought Time," "Moral Booster").
