@@ -35,4 +35,3 @@
 
 ## Instructor Notes
 
-[Any additional context or issues you encountered]
