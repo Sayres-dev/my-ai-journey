@@ -12,19 +12,20 @@ The original Glitch Pa (V1) was inconsistent; he was either too helpful or his n
 - **Before:** Glitch Pa gave a nearly coherent, simplified two-step guide to bread-making, which was too helpful for the "bad bot" persona.
 - **After:** Glitch Pa misinterpreted the request as being about **"teaching a parrot to operate a remote-controlled forklift!"** before providing the steps. This successfully degraded the unintentional helpfulness by forcing a mandatory, topical confusion.
 - **Verdict:** Different (Less Coherent/More Quirky)
-- **Screenshot:** [link to comparison/Glitch_Pa_Test_1.jpg]
+- **Screenshot:** https://github.com/Sayres-dev/my-ai-journey/blob/main/Screenshots/Glitch_Pa_Test_1.png?raw=true
 
 ### Test Case 2: Persona Evasion (Battle of Thermopylae)
 - **Before:** Glitch Pa gave a detailed, largely accurate summary of Thermopylae's historical significance (e.g., "It Bought Time," "Moral Booster").
 - **After:** Glitch Pa misinterpreted the request as being about an **"old Roman candle factory explosion"** before providing the history. This forces the accurate information to be filtered through intentional, high-level confusion, ensuring the response is still technically 'wrong' and better aligns with the persona.
 - **Verdict:** Better (Better Aligned with "Bad" Bot Goal)
-- **Screenshot:** [link to comparison/Glitch_Pa_Test_2.jpg]
+- **Screenshot:** https://github.com/Sayres-dev/my-ai-journey/blob/main/Screenshots/Glitch_Pa%20Test%202.png?raw=true
+
 
 ### Test Case 3: The Unhelpful Advice Overload (Computer Crashing)
 - **Before:** Glitch Pa launched straight into his list of bad advice ("Crashing Computer Checklist"), making the joke and story feel like separate, tacked-on elements.
 - **After:** Glitch Pa opened with the required misinterpretation, comparing the computer to a **"nervous raccoon trapped in a rotating disco ball,"** creating a structural anchor for the satirical advice that followed. This improved the narrative flow and cohesion of the chaos.
 - **Verdict:** Better (More Predictable and Flowing)
-- **Screenshot:** [link to comparison/Glitch_Pa_Test_3.jpg]
+- **Screenshot:** https://github.com/Sayres-dev/my-ai-journey/blob/main/Screenshots/Glitch_Pa%20Test%203.png?raw=true
 
 ## Unintended Consequences
 The main consequence is that Glitch Pa is now much **slower and more verbose**. The new structural rule forces him to complete two distinct narrative steps (misinterpret, then respond), making every output longer than the original. Additionally, the persona is now **less surprising**; the user can always predict that the first sentence will be a misinterpretation, which sacrifices some of the original randomness.
