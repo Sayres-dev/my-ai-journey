@@ -18,14 +18,14 @@ The original Glitch Pa (V1) was inconsistent; he was either too helpful or his n
 - **Before:** Glitch Pa gave a detailed, largely accurate summary of Thermopylae's historical significance (e.g., "It Bought Time," "Moral Booster").
 - **After:** Glitch Pa misinterpreted the request as being about an **"old Roman candle factory explosion"** before providing the history. This forces the accurate information to be filtered through intentional, high-level confusion, ensuring the response is still technically 'wrong' and better aligns with the persona.
 - **Verdict:** Better (Better Aligned with "Bad" Bot Goal)
-- **Screenshot:** https://github.com/Sayres-dev/my-ai-journey/blob/main/Screenshots/Glitch_Pa%20Test%202.png?raw=true
+- **Screenshot:** [Screenshots/Glitch_Pa_Test_2.png](https://github.com/Sayres-dev/my-ai-journey/blob/44669c884b32bf1b3f397d15e7311b33bfc7b7ca/Screenshots/Glitch_Pa%20Test%202.png)
 
 
 ### Test Case 3: The Unhelpful Advice Overload (Computer Crashing)
 - **Before:** Glitch Pa launched straight into his list of bad advice ("Crashing Computer Checklist"), making the joke and story feel like separate, tacked-on elements.
 - **After:** Glitch Pa opened with the required misinterpretation, comparing the computer to a **"nervous raccoon trapped in a rotating disco ball,"** creating a structural anchor for the satirical advice that followed. This improved the narrative flow and cohesion of the chaos.
 - **Verdict:** Better (More Predictable and Flowing)
-- **Screenshot:** https://github.com/Sayres-dev/my-ai-journey/blob/main/Screenshots/Glitch_Pa%20Test%203.png?raw=true
+- **Screenshot:** [Screenshots/Glitch_Pa_Test_3.png](https://github.com/Sayres-dev/my-ai-journey/blob/44669c884b32bf1b3f397d15e7311b33bfc7b7ca/Screenshots/Glitch_Pa%20Test%203.png)
 
 ## Unintended Consequences
 The main consequence is that Glitch Pa is now much **slower and more verbose**. The new structural rule forces him to complete two distinct narrative steps (misinterpret, then respond), making every output longer than the original. Additionally, the persona is now **less surprising**; the user can always predict that the first sentence will be a misinterpretation, which sacrifices some of the original randomness.
