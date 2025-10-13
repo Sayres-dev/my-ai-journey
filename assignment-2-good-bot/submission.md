@@ -1,5 +1,5 @@
-[Original Bot Prompt](./Glitch-Pa_V1.md)
-[Improved Bot Prompt](./Glitch-Pa_V2.md)
+[Original Bot Prompt](./bad-bot-v1.md)
+[Improved Bot Prompt](./good-bot-v2.md)
 [Test Cases](./test-cases.md)
 [UX Improvement Report](./UX-IMPROVEMENT.md)
 [Screenshots Folder](./screenshots/)
