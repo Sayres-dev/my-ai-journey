@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Potato.wiz (v2.0.8) - Final Polish</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        import { getFirestore, collection, addDoc, query, orderBy, onSnapshot, doc, updateDoc, deleteDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-functions.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyAltP8BK0jGzn0JJoLBOnv15Uy8SIL1t_c",
+            authDomain: "potatowizhq-28cdf.firebaseapp.com",
+            projectId: "potatowizhq-28cdf",
+            storageBucket: "potatowizhq-28cdf.firebasestorage.app",
+            messagingSenderId: "921460964964",
+            appId: "1:921460964964:web:a180aed471158b0291e971",
+            measurementId: "G-ZTZJ1MFJV2"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        const functions = getFunctions(app); 
+        const appId = 'potato-wiz-app';
+        const chatWithTater = httpsCallable(functions, 'chat_with_tater');
+
+        let state = { user: null, chats: [], activeChatId: null, messages: [] };
+        let userSetup = { name: '', interests: '' };
+        let chatToDeleteId = null; 
+        
+        const loadingMessages = [
+            "Fan speed at 110%. Prepare for takeoff...",
+            "Smells like burning plastic... probably fine...",
+            "My GPU is crying tears of thermal paste...",
+            "Rerouting power from the toaster to the RAM...",
+            "Preheating CPU to 400°F... bring marshmallows...",
+            "Mage is chasing the loading cursor. Please hold...",
+            "Rouge stepped on the Escape key. Re-initializing...",
+            "Scanning tater tots for extra RAM compatibility...",
+            "Downloading more RAM from the internet...",
+            "Error 404: Motivation not found. Rebooting...",
+            "Converting caffeine into code..."
+        ];
+
+        const els = {
+            chatList: document.getElementById('chat-list'),
+            messageArea: document.getElementById('message-area'),
+            input: document.getElementById('chat-input'),
+            sendBtn: document.getElementById('send-btn'),
+            newChatBtn: document.getElementById('new-chat-btn'),
+            statusIndicator: document.getElementById('status-indicator'),
+            statusText: document.getElementById('status-text'),
+            sidebar: document.getElementById('sidebar'),
+            menuBtn: document.getElementById('menu-btn'),
+            menuText: document.getElementById('menu-text'),
+            renameBtn: document.getElementById('rename-btn'),
+            purgeModal: document.getElementById('purge-modal'),
+            confirmPurgeBtn: document.getElementById('confirm-purge-btn'),
+            cancelPurgeBtn: document.getElementById('cancel-purge-btn'),
+            // Rename Modal Elements
+            renameModal: document.getElementById('rename-modal'),
+            renameInput: document.getElementById('rename-input'),
+            confirmRenameBtn: document.getElementById('confirm-rename-btn'),
+            cancelRenameBtn: document.getElementById('cancel-rename-btn')
+        };
+
+        signInAnonymously(auth).catch((error) => console.error("Login Failed:", error));
+
+        onAuthStateChanged(auth, (u) => {
+            state.user = u;
+            if (u) {
+                els.statusText.innerText = "ONLINE";
+                els.statusIndicator.className = "flex flex-col items-end"; 
+                document.getElementById('status-badge').className = "text-[10px] px-3 py-1 border font-bold uppercase tracking-widest bg-[#E6A747]/20 text-[#E6A747] border-[#E6A747] shadow-[0_0_10px_#E6A747]";
+                listenToChats();
+            }
+        });
+
+        window.addEventListener('DOMContentLoaded', () => {
+            const savedPrivacy = localStorage.getItem('potato_privacy_accepted');
+            const savedProfile = localStorage.getItem('potato_user_profile');
+            const privacyModal = document.getElementById('privacy-modal');
+            const setupModal = document.getElementById('setup-modal');
+
+            if (!savedPrivacy) {
+                privacyModal.style.display = 'flex';
+            } else if (!savedProfile) {
+                setupModal.style.display = 'flex';
+            } else {
+                userSetup = JSON.parse(savedProfile);
+                updateHeaderUI();
+            }
+
+            document.getElementById('accept-privacy-btn').onclick = () => {
+                localStorage.setItem('potato_privacy_accepted', 'true');
+                privacyModal.style.display = 'none';
+                setupModal.style.display = 'flex';
+            };
+
+            document.getElementById('setup-form').onsubmit = (e) => {
+                e.preventDefault();
+                saveIdentity();
+            };
+            
+            document.getElementById('edit-profile-btn').onclick = () => {
+                document.getElementById('user-name').value = userSetup.name || '';
+                document.getElementById('user-interests').value = userSetup.interests || '';
+                setupModal.style.display = 'flex';
+            };
+        });
+
+        function saveIdentity() {
+            userSetup.name = document.getElementById('user-name').value.trim();
+            userSetup.interests = document.getElementById('user-interests').value.trim();
+            localStorage.setItem('potato_user_profile', JSON.stringify(userSetup));
+            document.getElementById('setup-modal').style.display = 'none';
+            updateHeaderUI();
+        }
+
+        function updateHeaderUI() {
+             document.getElementById('header-subtitle').innerText = `Welcome, ${userSetup.name || 'User'}!`;
+        }
+
+        function listenToChats() {
+            const q = query(collection(db, 'artifacts', appId, 'users', state.user.uid, 'chats'), orderBy('updatedAt', 'desc'));
+            onSnapshot(q, (snapshot) => {
+                state.chats = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+                renderChatList();
+                if (!state.activeChatId && state.chats.length > 0) loadChat(state.chats[0].id);
+            });
+        }
+
+        // --- PURGE PROTOCOL LOGIC ---
+        window.initiatePurge = (chatId, event) => {
+            event.stopPropagation(); 
+            chatToDeleteId = chatId;
+            els.purgeModal.style.display = 'flex';
+        };
+
+        els.confirmPurgeBtn.onclick = async () => {
+            if (!chatToDeleteId) return;
+            try {
+                await deleteDoc(doc(db, 'artifacts', appId, 'users', state.user.uid, 'chats', chatToDeleteId));
+                els.purgeModal.style.display = 'none';
+                chatToDeleteId = null;
+                if (state.chats.length > 0) {
+                     loadChat(state.chats[0].id);
+                } else {
+                    state.activeChatId = null;
+                    state.messages = [];
+                    renderMessages();
+                }
+            } catch (e) {
+                console.error("Purge Failed", e);
+                alert("PURGE FAILED: " + e.message);
+            }
+        };
+
+        els.cancelPurgeBtn.onclick = () => {
+            els.purgeModal.style.display = 'none';
+            chatToDeleteId = null;
+        };
+
+        // --- RENAME PROTOCOL LOGIC (New Modal) ---
+        els.renameBtn.addEventListener('click', () => {
+            if (!state.activeChatId) return;
+            const currentTitle = document.getElementById('chat-title').innerText;
+            els.renameInput.value = currentTitle;
+            els.renameModal.style.display = 'flex';
+            els.renameInput.focus();
+        });
+
+        els.cancelRenameBtn.onclick = () => {
+            els.renameModal.style.display = 'none';
+        };
+
+        els.confirmRenameBtn.onclick = async () => {
+            const newName = els.renameInput.value.trim();
+            if (newName && newName.length > 0) {
+                document.getElementById('chat-title').innerText = newName.toUpperCase();
+                els.renameModal.style.display = 'none';
+                await updateDoc(doc(db, 'artifacts', appId, 'users', state.user.uid, 'chats', state.activeChatId), {
+                    title: newName.toUpperCase(),
+                    updatedAt: serverTimestamp()
+                });
+            }
+        };
+        // Allow Enter key in rename input
+        els.renameInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') els.confirmRenameBtn.click();
+        });
+
+
+        let msgUnsub = null;
+        window.loadChat = function(chatId) {
+            if (msgUnsub) msgUnsub();
+            state.activeChatId = chatId;
+            renderChatList();
+            toggleSidebar(false);
+
+            const currentChat = state.chats.find(c => c.id === chatId);
+            if(currentChat) {
+                document.getElementById('chat-title').innerText = currentChat.title;
+                els.renameBtn.classList.remove('hidden');
+            } else {
+                 document.getElementById('chat-title').innerText = "TERMINAL";
+                 els.renameBtn.classList.add('hidden');
+            }
+
+            const chatRef = doc(db, 'artifacts', appId, 'users', state.user.uid, 'chats', chatId);
+            msgUnsub = onSnapshot(chatRef, (docSnap) => {
+                if (docSnap.exists()) {
+                    state.messages = docSnap.data().messages || [];
+                    renderMessages();
+                }
+            });
+            
+            els.input.disabled = false;
+            els.input.focus();
+        };
+
+        window.handleSendMessage = async () => {
+            const text = els.input.value.trim();
+            if (!text) return;
+
+            els.input.value = '';
+            els.input.style.height = 'auto'; 
+            
+            const newMsg = { role: 'user', text: text, timestamp: new Date().toISOString() };
+            let updatedMessages = [...state.messages, newMsg];
+            state.messages = updatedMessages;
+            renderMessages(); 
+
+            const loaderId = 'loader-' + Date.now();
+            els.messageArea.insertAdjacentHTML('beforeend', `
+                <div class="flex w-full justify-start mb-6 animate-fade-in" id="${loaderId}">
+                    <div class="flex max-w-[85%] flex-row gap-3 items-start">
+                        <div class="w-10 h-10 border-2 border-[#5D4037] flex items-center justify-center bg-[#1A0F0A] shrink-0">
+                            <i data-lucide="cpu" class="text-[#5D4037] w-5 h-5 animate-spin"></i>
+                        </div>
+                        <div class="p-4 border-2 border-[#5D4037] border-dashed bg-[#1A0F0A] text-[#5D4037] font-mono text-xs leading-relaxed w-full">
+                            <div class="flex justify-between items-center mb-2">
+                                <span class="uppercase font-bold tracking-widest animate-pulse text-[#E6A747]">FILLING MUGS...</span>
+                            </div>
+                            <div class="h-10 border border-[#E6A747] bg-[#140b08] mb-3 flex items-center px-1 gap-1 overflow-hidden" id="rootbeer-bar-${loaderId}"></div>
+                            <div id="panic-text-${loaderId}" class="text-[10px] opacity-80">Initializing logic circuits...</div>
+                        </div>
+                    </div>
+                </div>
+            `);
+            lucide.createIcons();
+            els.messageArea.scrollTop = els.messageArea.scrollHeight;
+
+            let ticks = 0;
+            const interval = setInterval(() => {
+                ticks++;
+                if (ticks % 4 === 0) {
+                    const el = document.getElementById(`panic-text-${loaderId}`);
+                    if (el) el.innerText = loadingMessages[Math.floor(Math.random() * loadingMessages.length)];
+                }
+                const bar = document.getElementById(`rootbeer-bar-${loaderId}`);
+                if (bar && bar.childElementCount < 8) {
+                    const img = document.createElement('img');
+                    img.src = 'root_beer.png'; 
+                    img.className = 'h-8 w-auto pixelated animate-bounce-short';
+                    img.onerror = function() { this.style.display='none'; };
+                    bar.appendChild(img);
+                }
+            }, 500);
+
+            try {
+                let currentChatId = state.activeChatId;
+                if (!currentChatId) {
+                   const ref = await addDoc(collection(db, 'artifacts', appId, 'users', state.user.uid, 'chats'), {
+                       title: text.substring(0, 20).toUpperCase() + "...", createdAt: serverTimestamp(), updatedAt: serverTimestamp(), messages: updatedMessages
+                   });
+                   currentChatId = ref.id;
+                   window.loadChat(currentChatId);
+                } else {
+                    await updateDoc(doc(db, 'artifacts', appId, 'users', state.user.uid, 'chats', currentChatId), {
+                        messages: updatedMessages, updatedAt: serverTimestamp()
+                    });
+                }
+
+                const historyPayload = updatedMessages.map(m => ({ role: m.role === 'user' ? 'user' : 'model', parts: [{ text: m.text }] }));
+                const result = await chatWithTater({ 
+                    history: historyPayload, newMessage: text, userName: userSetup.name, userInterests: userSetup.interests
+                });
+
+                clearInterval(interval);
+                const loaderEl = document.getElementById(loaderId);
+                if(loaderEl) loaderEl.remove();
+
+                const aiText = result.data.text || "[Empty Response]";
+                updatedMessages.push({ role: 'model', text: aiText, timestamp: new Date().toISOString() });
+                
+                await updateDoc(doc(db, 'artifacts', appId, 'users', state.user.uid, 'chats', currentChatId), {
+                    messages: updatedMessages, updatedAt: serverTimestamp()
+                });
+
+            } catch (err) {
+                clearInterval(interval);
+                const loaderEl = document.getElementById(loaderId);
+                if(loaderEl) loaderEl.remove();
+                state.messages.push({ role: 'model', text: "⚠️ CRITICAL FAILURE: " + err.message, timestamp: new Date().toISOString() });
+                renderMessages();
+            }
+        };
+
+        function renderChatList() {
+            els.chatList.innerHTML = state.chats.map(chat => `
+                <div class="group relative p-3 border-l-4 cursor-pointer flex items-center gap-2 transition-all ${state.activeChatId === chat.id ? 'bg-[#2a1a12] border-[#E6A747] text-[#E6A747]' : 'border-transparent text-[#5D4037] hover:text-[#F2E8C9] hover:bg-[#2a1a12]/50'}"
+                     onclick="window.loadChat('${chat.id}')">
+                    <i data-lucide="message-square" class="w-4 h-4 shrink-0"></i>
+                    <span class="text-xs font-bold uppercase truncate flex-1">${chat.title}</span>
+                    
+                    <button onclick="window.initiatePurge('${chat.id}', event)" class="opacity-0 group-hover:opacity-100 text-[#5D4037] hover:text-red-500 transition-opacity p-1">
+                        <i data-lucide="trash-2" class="w-3 h-3"></i>
+                    </button>
+                </div>
+            `).join('');
+            lucide.createIcons();
+        }
+
+        function renderMessages() {
+            els.messageArea.innerHTML = state.messages.map(msg => {
+                const isUser = msg.role === 'user';
+                return `
+                <div class="flex w-full ${isUser ? 'justify-end' : 'justify-start'} mb-6 animate-fade-in">
+                    <div class="flex max-w-[85%] ${isUser ? 'flex-row-reverse' : 'flex-row'} gap-3 items-start">
+                        <div class="w-10 h-10 border-2 border-[#E6A747] flex items-center justify-center bg-[#1A0F0A] shrink-0 overflow-hidden">
+                            ${isUser 
+                                ? `<i data-lucide="user" class="text-[#E6A747] w-5 h-5"></i>`
+                                : `<img src="tater_avatar.png" class="w-full h-full object-cover pixelated" alt="T">`
+                            }
+                        </div>
+                        <div class="p-4 border-2 font-mono text-sm leading-relaxed whitespace-pre-wrap shadow-[4px_4px_0px_0px_rgba(0,0,0,0.3)] w-fit break-words max-w-full
+                            ${isUser ? 'bg-[#E6A747] text-[#1A0F0A] border-[#E6A747]' : 'bg-[#1A0F0A] text-[#F2E8C9] border-[#E6A747]'}">
+                            ${msg.text}
+                        </div>
+                    </div>
+                </div>`;
+            }).join('');
+            lucide.createIcons();
+            els.messageArea.scrollTop = els.messageArea.scrollHeight;
+        }
+
+        function toggleSidebar(forceOpen) {
+            const isOpen = els.sidebar.classList.contains('translate-x-0');
+            const shouldOpen = forceOpen !== undefined ? forceOpen : !isOpen;
+            if (shouldOpen) {
+                els.sidebar.classList.remove('-translate-x-full');
+                els.sidebar.classList.add('translate-x-0');
+                els.menuText.innerText = "[ X ]"; 
+            } else {
+                els.sidebar.classList.add('-translate-x-full');
+                els.sidebar.classList.remove('translate-x-0');
+                els.menuText.innerText = "[ >_ ]"; 
+            }
+        }
+        els.menuBtn.onclick = () => toggleSidebar();
+
+        els.input.addEventListener('input', function() {
+            this.style.height = 'auto';
+            this.style.height = (this.scrollHeight) + 'px';
+        });
+
+        els.input.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                window.handleSendMessage();
+            }
+        });
+        els.sendBtn.addEventListener('click', window.handleSendMessage);
+        els.newChatBtn.addEventListener('click', async () => {
+             const ref = await addDoc(collection(db, 'artifacts', appId, 'users', state.user.uid, 'chats'), {
+                title: "NEW SESSION", createdAt: serverTimestamp(), updatedAt: serverTimestamp(), messages: []
+             });
+             loadChat(ref.id);
+        });
+
+    </script>
+
+    <style>
+        /* SCROLLBAR FIX */
+        ::-webkit-scrollbar { width: 12px; height: 12px; }
+        ::-webkit-scrollbar-track { background: #140b08; border-left: 1px solid #2a1a12; }
+        ::-webkit-scrollbar-thumb { background: #5D4037; border: 2px solid #140b08; }
+        ::-webkit-scrollbar-thumb:hover { background: #E6A747; }
+        
+        .pixelated { image-rendering: pixelated; }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade-in { animation: fadeIn 0.2s ease-out forwards; }
+
+        @keyframes bounceShort {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-3px); }
+        }
+        .animate-bounce-short { animation: bounceShort 0.3s ease-in-out; }
+    </style>
+</head>
+<body class="bg-[#1A0F0A] font-mono text-[#F2E8C9] h-screen flex overflow-hidden selection:bg-[#E6A747] selection:text-[#1A0F0A]">
+
+    <div id="privacy-modal" class="fixed inset-0 bg-black/90 flex items-center justify-center z-50 hidden backdrop-blur-sm">
+        <div class="bg-[#2a1a12] border-2 border-[#E6A747] rounded-none p-8 max-w-md w-full text-center shadow-[0_0_20px_rgba(230,167,71,0.2)]">
+            <h2 class="text-xl font-bold text-[#E6A747] mb-4 uppercase tracking-widest">System Protocol</h2>
+            <p class="text-[#F2E8C9] mb-6 text-xs leading-relaxed">
+                By initializing connection to PotatoWizHQ, you acknowledge data persistence protocols.
+            </p>
+            <button id="accept-privacy-btn" class="bg-[#E6A747] text-[#1A0F0A] font-bold px-6 py-3 uppercase hover:bg-[#FF4500] transition shadow-[4px_4px_0_0_#1A0F0A]">
+                Initialize Uplink
+            </button>
+        </div>
+    </div>
+
+    <div id="setup-modal" class="fixed inset-0 bg-black/90 flex items-center justify-center z-50 hidden backdrop-blur-sm">
+        <div class="bg-[#2a1a12] border-2 border-[#E6A747] p-8 max-w-md w-full shadow-[0_0_20px_rgba(230,167,71,0.2)]">
+            <h2 class="text-xl font-bold text-[#E6A747] mb-4 uppercase text-center tracking-widest">Identify User</h2>
+            <form id="setup-form" class="flex flex-col gap-4">
+                <div class="flex flex-col gap-1">
+                    <label class="text-[10px] uppercase text-[#5D4037]">Designation (Name)</label>
+                    <input type="text" id="user-name" class="p-3 border-2 border-[#5D4037] bg-[#1A0F0A] text-[#E6A747] focus:border-[#E6A747] outline-none" required>
+                </div>
+                <div class="flex flex-col gap-1">
+                    <label class="text-[10px] uppercase text-[#5D4037]">Parameters (Interests)</label>
+                    <input type="text" id="user-interests" class="p-3 border-2 border-[#5D4037] bg-[#1A0F0A] text-[#E6A747] focus:border-[#E6A747] outline-none">
+                </div>
+                <button type="submit" class="mt-2 bg-[#E6A747] text-[#1A0F0A] font-bold px-6 py-3 uppercase hover:bg-[#FF4500] transition shadow-[4px_4px_0_0_#1A0F0A]">
+                    Save Configuration
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <div id="rename-modal" class="fixed inset-0 bg-black/90 flex items-center justify-center z-50 hidden backdrop-blur-sm">
+        <div class="bg-[#2a1a12] border-2 border-[#E6A747] p-8 max-w-md w-full shadow-[0_0_20px_rgba(230,167,71,0.2)]">
+            <h2 class="text-xl font-bold text-[#E6A747] mb-4 uppercase text-center tracking-widest">Rename Session</h2>
+            <div class="flex flex-col gap-4">
+                <input type="text" id="rename-input" class="p-3 border-2 border-[#5D4037] bg-[#1A0F0A] text-[#E6A747] focus:border-[#E6A747] outline-none" placeholder="NEW DESIGNATION...">
+                <div class="flex gap-3 justify-center">
+                    <button id="cancel-rename-btn" class="border border-[#5D4037] text-[#F2E8C9] px-4 py-2 text-xs uppercase font-bold hover:bg-[#2a1a12] transition">
+                        Cancel
+                    </button>
+                    <button id="confirm-rename-btn" class="bg-[#E6A747] text-[#1A0F0A] font-bold px-6 py-2 text-xs uppercase hover:bg-[#FF4500] transition shadow-[4px_4px_0_0_#1A0F0A]">
+                        Save Name
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="purge-modal" class="fixed inset-0 bg-red-900/20 flex items-center justify-center z-[60] hidden backdrop-blur-md">
+        <div class="bg-[#1A0F0A] border-2 border-red-600 p-8 max-w-sm w-full text-center shadow-[0_0_50px_rgba(220,38,38,0.4)] relative overflow-hidden">
+            <div class="absolute inset-0 bg-[linear-gradient(45deg,transparent_25%,rgba(220,38,38,0.1)_25%,rgba(220,38,38,0.1)_50%,transparent_50%,transparent_75%,rgba(220,38,38,0.1)_75%,rgba(220,38,38,0.1)_100%)] bg-[length:20px_20px] opacity-50 pointer-events-none"></div>
+            
+            <div class="relative z-10">
+                <i data-lucide="alert-triangle" class="w-12 h-12 text-red-600 mx-auto mb-4 animate-pulse"></i>
+                <h2 class="text-xl font-bold text-red-500 mb-2 uppercase tracking-widest">Purge Protocol</h2>
+                <p class="text-[#F2E8C9] mb-6 text-xs leading-relaxed border-y border-red-900/50 py-4">
+                    WARNING: You are about to permanently delete this memory bank. This action cannot be undone.
+                    <br><br>
+                    <span class="text-red-400">Are you sure you want to proceed?</span>
+                </p>
+                <div class="flex gap-3 justify-center">
+                    <button id="cancel-purge-btn" class="border border-[#5D4037] text-[#F2E8C9] px-4 py-2 text-xs uppercase font-bold hover:bg-[#2a1a12] transition">
+                        Abort
+                    </button>
+                    <button id="confirm-purge-btn" class="bg-red-600 text-white px-6 py-2 text-xs uppercase font-bold hover:bg-red-700 transition shadow-[4px_4px_0_0_#000]">
+                        Execute Purge
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="sidebar" class="fixed inset-y-0 left-0 w-72 bg-[#1A0F0A] border-r-2 border-[#E6A747] flex flex-col z-40 transition-transform duration-300 -translate-x-full md:translate-x-0 shadow-[10px_0_20px_rgba(0,0,0,0.5)] md:shadow-none md:relative">
+        
+        <div class="p-4 border-b-2 border-[#E6A747] bg-[#2a1a12] flex items-center gap-3 h-16 shrink-0">
+            <div class="w-8 h-8 border border-[#E6A747] bg-[#1A0F0A] flex items-center justify-center overflow-hidden">
+                <img src="tater_avatar.png" class="w-full h-full object-cover pixelated">
+            </div>
+            <span class="font-bold text-xl tracking-widest text-[#E6A747]">POTATO.WIZ</span>
+        </div>
+
+        <div class="p-4 flex flex-col gap-2 bg-[#1A0F0A] shrink-0">
+            <button id="new-chat-btn" class="w-full flex items-center justify-center gap-2 bg-[#E6A747] hover:bg-[#FF4500] text-[#1A0F0A] py-3 font-bold uppercase tracking-wider transition-all shadow-[4px_4px_0px_0px_#2a1a12] active:translate-y-1 active:shadow-none text-xs">
+                <i data-lucide="plus" class="w-4 h-4"></i> New Session
+            </button>
+            <button id="edit-profile-btn" class="w-full flex items-center justify-center gap-2 border border-[#5D4037] text-[#5D4037] hover:text-[#E6A747] hover:border-[#E6A747] py-2 text-[10px] font-bold uppercase tracking-widest transition-all">
+                <i data-lucide="user-cog" class="w-3 h-3"></i> Edit Identity
+            </button>
+        </div>
+        
+        <div id="chat-list" class="overflow-y-auto px-3 space-y-1 py-2 min-h-[100px] max-h-[50%] shrink-1 border-b border-[#5D4037]/30 scrollbar-visible">
+            <div class="text-center text-[#5D4037] mt-10 text-xs uppercase">Retrieving Memory Banks...</div>
+        </div>
+
+        <div class="flex-1 bg-[#140b08] flex flex-col gap-2 p-2 overflow-hidden border-t-2 border-[#E6A747] relative">
+             <div class="absolute top-1 left-0 right-0 text-center text-[9px] text-[#5D4037] uppercase tracking-widest">Active Processes</div>
+             
+             <div class="flex-1 relative min-h-0 flex flex-col items-center justify-end group">
+                 <img src="mage.gif" class="w-full h-full object-contain pixelated opacity-80 group-hover:opacity-100 transition-opacity" alt="M">
+                 <div class="w-full bg-[#1A0F0A] border border-[#5D4037] p-1 shrink-0 mt-1">
+                    <div class="flex justify-between text-[8px] text-[#F2E8C9] mb-1"><span>MAGE.exe</span> <span>OUCH...</span></div>
+                    <div class="h-1 w-full bg-[#2a1a12]"><div class="h-full w-[70%] bg-[#E6A747]"></div></div>
+                 </div>
+             </div>
+
+             <div class="flex-1 relative min-h-0 flex flex-col items-center justify-end group">
+                 <img src="rouge.gif" class="w-full h-full object-contain pixelated opacity-80 group-hover:opacity-100 transition-opacity" alt="R">
+                 <div class="w-full bg-[#1A0F0A] border border-[#5D4037] p-1 shrink-0 mt-1">
+                    <div class="flex justify-between text-[8px] text-[#F2E8C9] mb-1"><span>ROUGE.bat</span> <span>SLEEPING</span></div>
+                    <div class="h-1 w-full bg-[#2a1a12]"><div class="h-full w-[95%] bg-[#FF4500]"></div></div>
+                 </div>
+             </div>
+        </div>
+
+        <div class="p-3 border-t border-[#5D4037] bg-[#1A0F0A] shrink-0">
+            <div class="text-[8px] text-[#5D4037] uppercase font-bold tracking-widest text-center">
+                v2.0.8 [PROTOCOL_FIXED]<br>
+                SYSTEM ID: TATER
+            </div>
+        </div>
+    </div>
+
+    <div class="flex-1 flex flex-col relative bg-[linear-gradient(#2a1a12_1px,transparent_1px),linear-gradient(90deg,#2a1a12_1px,transparent_1px)] bg-[size:40px_40px]">
+        
+        <div class="h-16 border-b-2 border-[#E6A747] bg-[#1A0F0A]/95 backdrop-blur flex items-center justify-between px-4 sticky top-0 z-30">
+            <div class="flex items-center gap-3 md:gap-4">
+                <button id="menu-btn" class="md:hidden text-[#E6A747] font-mono font-bold text-sm animate-pulse border border-[#E6A747] px-2 py-1 bg-[#2a1a12]">
+                    <span id="menu-text">[ >_ ]</span>
+                </button>
+
+                <div class="flex flex-col">
+                    <div class="flex items-center gap-3">
+                        <h2 id="chat-title" class="font-bold text-[#E6A747] uppercase tracking-widest text-sm md:text-base truncate max-w-[150px] md:max-w-none">TERMINAL IDLE</h2>
+                        <button id="rename-btn" class="hidden text-[#5D4037] hover:text-[#E6A747] transition-colors" title="Rename Session">
+                            <i data-lucide="edit-2" class="w-3 h-3"></i>
+                        </button>
+                    </div>
+                    <span id="header-subtitle" class="text-[10px] text-[#FF4500] uppercase tracking-wide font-bold">Welcome to PotatoWizHQ</span>
+                </div>
+            </div>
+
+            <div id="status-indicator" class="flex flex-col items-end">
+                <div id="status-badge" class="text-[10px] px-3 py-1 border font-bold uppercase tracking-widest bg-[#FF4500]/20 text-[#FF4500] border-[#FF4500]">
+                    <span id="status-text">OFFLINE</span>
+                </div>
+            </div>
+        </div>
+
+        <div id="message-area" class="flex-1 overflow-y-auto p-4 md:p-8 pt-10 scrollbar-thin pb-32">
+            <div class="text-center mt-20 opacity-50">
+                <img src="tater_avatar.png" class="w-17 h-17 mx-auto mb-4 opacity-90 pixelated" onerror="this.style.display='none'">
+                <p class="uppercase tracking-widest text-xs text-[#E6A747]">Awaiting Input...</p>
+            </div>
+        </div>
+
+        <div class="p-4 bg-[#1A0F0A] border-t-2 border-[#E6A747] relative z-20">
+            <div class="max-w-4xl mx-auto relative flex items-end gap-2">
+                <textarea id="chat-input" disabled placeholder="ENTER COMMAND..." rows="1"
+                    class="w-full p-4 pr-12 max-h-48 min-h-[56px] bg-[#2a1a12] border-2 border-[#5D4037] focus:border-[#E6A747] text-[#F2E8C9] placeholder-[#5D4037] focus:outline-none font-mono text-sm resize-none shadow-[inset_0px_0px_10px_rgba(0,0,0,0.5)] transition-all overflow-hidden"></textarea>
+                <button id="send-btn" class="absolute right-3 bottom-3 p-2 bg-[#E6A747] hover:bg-[#FF4500] text-[#1A0F0A] transition-all shadow-[2px_2px_0px_0px_#1A0F0A] active:translate-y-1 active:shadow-none">
+                    <i data-lucide="send" class="w-4 h-4"></i>
+                </button>
+            </div>
+            <div class="text-center mt-2">
+                <span class="text-[20px] text-[#5D4037] uppercase">SHIFT+ENTER for new line</span>
+                <div class="text-[#5D4037] text-[12px] mt-1 uppercase tracking-wider opacity-50">
+                    &copy; Sarah Ayres
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        lucide.createIcons();
+    </script>
+</body>
+</html>
