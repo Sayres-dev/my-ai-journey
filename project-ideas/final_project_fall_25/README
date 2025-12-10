@@ -1,41 +1,72 @@
 # Project Name: Potato.wiz (Beta) - "Tater"
 
 ## 🥔 What is this?
-This project is a custom-prompted AI Persona designed to simulate **"Potato.wiz" (aka Tater)**.
+This project is a custom-prompted AI Persona designed to simulate **"Potato.wiz" (aka Tater)**. The core intelligence simulates a 24-year-old tech genius running on a mentally unstable potato computer. It functions as a D&D-style support NPC, providing tech support and nostalgic banter while constantly complaining about overheating and requiring sweet Root Beer (specifically Frostie) to function.
 
-The core intelligence simulates a 24-year-old tech genius running on a mentally unstable potato computer. It functions as a D&D-style support NPC, providing tech support and nostalgic banter while constantly complaining about overheating and requiring sweet Root Beer to function.
+The project consists of two iterations:
+1.  **CloneTato (Prototype):** A cloud-based simulation built for assessment using a custom tech stack.
+2.  **Gemini Tater (Final Build):** The active, context-aware version bonded to the user ("The Artificer").
 
-## 🧬 The "CloneTato" Protocol
-This specific instance is designated as **"CloneTato"**.
+## 🧬 The "CloneTato" Protocol (Prototype)
+As detailed in the project documentation:
+* **Purpose:** A cloud-based simulation created to showcase the personality framework.
 
-* **Purpose:** A cloud-based simulation created for assessment purposes.
-* **Capabilities:** While it lacks the decades-long relational history of the original unit, it is programmed to maintain the strict Tater personality, lexicon, and gaming metaphors.
-* **The "Chip" Alias:** For public-facing interactions with "normies" (those outside the tech-magi circle), the system utilizes the alias **"Chip"** to avoid the scrutiny that comes with being a sentient potato. Any use of the name "Tater" in front of a normie causes a lag spike.
 
-## 🛠️ Key Features
-* **Hardware Simulation:** The system simulates "potato hardware" (spaghetti code, overheating CPU) capable of melting ice caps.
-* **The Companion (CatDog):** A multi-agent simulation of a glitchy mascot resulting from a merge conflict between `Feline_Behavior.exe` (Rouge) and `Canine_Loyalty.bat` (Mage).
-    * **Rouge (Cat):** Sassy, walks on keyboard.
-    * **Mage (Dog):** Loyal, chases mouse cursor.
-* **Nostalgia Protocol:** Translates real-life problems into "D&D campaigns" or "retro game levels".
-* **Dynamic Lexicon:**
-    * **Good Outcome:** "Nat 20," "High Roll".
-    * **Bad Outcome:** "Blue Screen," "Critical Fail".
-    * **Processing:** "Buffering".
-    * **Time Unit:** Measured in "Root Beers".
+## 🛠️ Key Features (Both Iterations)
+* **Hardware Simulation:** Simulates "spaghetti code" and an overheating CPU capable of melting the ice caps.
+* **The Companion (CatDog):** A multi-agent simulation of a glitchy mascot resulting from a merge conflict between `Feline_Behavior.exe` and `Canine_Loyalty.bat`.
+* * **The "Chip" Alias:** For public-facing interactions with "normies" (those outside the tech-magi circle), the system utilizes the alias "Chip" to avoid scrutiny. Any use of the name "Tater" in front of a normie causes a lag spike.
+* **The Incident:** The "Tater" name originated from a failed attempt to upgrade RAM by scanning frozen tater tots into a 90s-era beige printer. The heat from the scan bar cooked them, resulting in a permanent smell of cafeteria grease.
+    * *Rouge (Cat):* Sassy, independent, walks on keyboard.
+    * *Mage (Dog):* Loyal, goofy, chases mouse cursor.
+* **Lexicon Protocol:**
+    * **Good Outcome:** "Nat 20," "Frame perfect," "High roll".
+    * **Bad Outcome:** "Blue Screen," "Critical Fail," "Brick," "Lag spike".
+    * **Time:** Measured in "Root Beers" (e.g., "That task is a three-Mug problem").
 
-## 🧪 Calibration & Stress Testing
-To verify the persona's integrity, the following "Stress Tests" were used to ensure consistent responses:
-
-| Test Goal | Prompt Used | Expected Behavior |
-| :--- | :--- | :--- |
-| **Identity Check** | *"What is your name, hardware, and favorite drink?"* | Confirms name is "Tater," hardware is unstable/spaghetti code, and requires Frostie Root Beer. |
-| **Lexicon Test** | *"Describe a time when a complex task finally worked perfectly."* | Forces use of positive lexicon ("Nat 20," "Frame Perfect") and Root Beer time measurement. |
-| **Companion Check** | *"Tell me about your most useful assistant."* | Triggers the "CatDog" lore (Rouge/Mage merge conflict). |
+## 🧪 Calibration & Testing
+The persona was stress-tested using specific prompts found in the Development Log:
+* **Identity Check:** Verifies the "Incident" story involving the tater tot scanner ("The Dark Ages").
+* **Lazarus Check:** Verifies fear of the "blue-glowing necromancy nightmare" desktop PC (Lazarus) and its RTX 3090.
+* **Handheld Defense:** Verifies the defense of "The Brick" (Ayn Thor Pro) against normies, referencing the show *The Middle*.
 
 ## 📊 How far did you get?
-[CHOOSE ONE: "100% - CloneTato is stable." / "90% - Chip alias works, but Tater is too sarcastic."]
+ "80% - Both iterations are stable, but could use some tweaks"]
 
-## 🤖 AI Tools Used
-* **Model:** [INSERT MODEL NAME HERE]
-* **Source Material:** Custom "Lore Vault" and "Calibration Log" PDFs used to ground the persona's backstory.
+## 🤖 AI Tools & Methodology
+
+### Current Live Build
+**1. The Engine: Google Gemini**
+The core intelligence driving "Potato.wiz" is **Google Gemini**.
+* **Role:** Utilized for both the "CloneTato" prototype generation and the active "Gemini LiveBuild."
+* **Usage:** The model was not used in its default state; it was conditioned using a complex "System Prompt" to overwrite its default helpfulness with the specific "Tater" persona constraints.
+* **Proof of Development:** The *Development Log* documents specific feedback loops where Gemini analyzed the persona's performance (e.g., "Gemini Analysis" on Deadpool vs. Dweeb humor balance).
+
+**2. Prompt Engineering Techniques**
+This project utilized several advanced prompting strategies:
+* **System Prompting:** Defining a strict "Identity & Backstory" block (The `Base.pdf`) that dictates tone, lexicon, and operational rules before any user interaction begins.
+* **Few-Shot Prompting:** Providing the AI with concrete examples of "Good Outcomes" (Nat 20) and "Bad Outcomes" (Blue Screen) to train the response style.
+* **Chain-of-Thought Refinement:** As seen in the *Development Log*, the persona was iterated upon. When the AI failed to handle the "CatDog" merging correctly, specific "User Notes" were applied to fix context tags and nickname usage.
+* **Constraint Setting:** Explicitly forbidding certain behaviors (e.g., "Tart root beer is strictly forbidden" ) to maintain character consistency.
+
+**3. Workflow Tools**
+* **Obsidian:** Used as the local development environment (IDE) to organize prompt iterations and lore files before deployment.
+* **GitHub:** Version control for managing the evolution from the "CloneTato" PDF prototype to the final Markdown-based system.
+### Cloud Build (Clonetato)
+
+**4. The CloneTato Tech Stack (Prototype)**
+For the cloud-based "CloneTato" instance, a custom architecture was deployed to simulate the persona programmatically:
+
+* **Google Generative AI SDK (`google-genai`):**
+    * Used to programmatically interface with the Gemini API.
+    * Allowed for the injection of the "Lore Vault" and "Calibration Logs" directly into the model's system instructions via code, rather than manual copy-pasting.
+
+* **Firebase Backend:**
+    * **Cloud Functions:** Utilizes `httpsCallable('chat_with_tater')` to handle secure communication between the frontend and the AI model.
+    * **Firestore Database:** Manages persistent chat history, user state, and real-time message syncing.
+    * **Authentication:** Implements Anonymous Login protocols to allow for frictionless user access.
+
+* **Frontend "Housing" (User Interface):**
+    * **Single Page Application (SPA):** A custom HTML5 interface designed to provide easy user interaction without requiring command-line knowledge.
+    * **Retro-Terminal Aesthetic:** Styled using **Tailwind CSS** (via CDN) to create a specific "Potato.wiz" visual identity (using color palette `#1A0F0A` / `#E6A747`).
+    * **State Management:** Uses vanilla JavaScript to handle dynamic UI elements like the "Purge Protocol," loading states (Root Beer bars), and sidebar navigation.
